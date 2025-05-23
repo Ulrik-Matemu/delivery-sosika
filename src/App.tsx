@@ -1,12 +1,33 @@
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import SignUp from './pages/signUp';
+import SignIn from './pages/signIn';
+import Dashboard from './pages/dashboard'; // Create this component
+//import { signOut } from 'firebase/auth';
+//import { auth } from './services/firebase';
+import { Home } from './pages/home';
+import Orders from './pages/orders';
 
-function App() {
+
+
+const App: React.FC = () => {
+
 
   return (
-    <>
-     <h1>Sosika Delivery Here</h1>
-    </>
-  )
-}
+    <Router>
+      <Routes>
+        <Route path="/home" element={<Home /> } />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
+        />
+        <Route path="*" element={<React.Fragment><h2>404 Not Found</h2></React.Fragment>} />
+      </Routes>
+    </Router>
+  );
+};
 
-export default App
+export default App;
