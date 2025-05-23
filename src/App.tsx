@@ -7,6 +7,7 @@ import Dashboard from './pages/dashboard'; // Create this component
 //import { auth } from './services/firebase';
 import { Home } from './pages/home';
 import Orders from './pages/orders';
+import WelcomeScreen from './pages/welcome';
 
 
 
@@ -16,6 +17,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<WelcomeScreen />} />
         <Route path="/home" element={<Home /> } />
         <Route path="/orders" element={<Orders />} />
         <Route path="/signup" element={<SignUp />} />

@@ -2,6 +2,17 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Map, { Source, Layer, Marker, NavigationControl, GeolocateControl } from 'react-map-gl';
 import { Phone, MapPin, Clock, Route, Eye, EyeOff } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
+import { Button } from "@/components/ui/button";
+import { checkOrderStatus } from '@/services/order-status';
 
 interface Coordinates {
   x: number;
@@ -127,6 +138,25 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({ origin, destination, phoneNum
     }
   }, [origin, destination, fitMapToBounds]);
 
+
+  useEffect(() => {
+    const orderDetailsStr = localStorage.getItem("orderLocations");
+    let orderId: number | null = null;
+    if (orderDetailsStr) {
+      try {
+        const orderDetails = JSON.parse(orderDetailsStr);
+        orderId = Number(orderDetails.orderId);
+      } catch (e) {
+        console.error("Failed to parse orderLocations from localStorage", e);
+      }
+    }
+    if (orderId !== null && !isNaN(orderId)) {
+      setTimeout(() => {
+        checkOrderStatus(orderId as number);
+      }, 20000);
+    }
+  }, []);
+
   return (
     <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50' : 'w-full h-screen'} bg-gray-900`}>
       {/* Header with controls */}
@@ -224,53 +254,59 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({ origin, destination, phoneNum
         )}
       </Map>
 
-      {/* Route Information Panel */}
+      {/* Route Information Drawer using shadcn */}
       {isInfoVisible && routeInfo && (
-        <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-t-3xl p-6 z-10">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4" onClick={() => setIsInfoVisible(!isInfoVisible)}></div>
-
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-blue-50 rounded-2xl p-4 text-center">
-              <Route className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-blue-600">
-                {formatDistance(routeInfo.distance)}
+        <Drawer open={isInfoVisible} onOpenChange={setIsInfoVisible}>
+          <DrawerTrigger className='bg-black' asChild>
+            {/* Hidden trigger, panel is controlled by isInfoVisible */}
+            <div />
+          </DrawerTrigger>
+          <DrawerContent className='bg-white'>
+            <div className="mx-auto w-full max-w-md">
+              <DrawerHeader>
+                <DrawerTitle className='text-center'>Route Information</DrawerTitle>
+              </DrawerHeader>
+              <div className="grid grid-cols-2 gap-4 mb-6 px-4">
+                <div className="bg-blue-50 rounded-2xl p-4 text-center">
+                  <Route className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-blue-600">
+                    {formatDistance(routeInfo.distance)}
+                  </div>
+                  <div className="text-sm text-gray-600">Distance</div>
+                </div>
+                <div className="bg-green-50 rounded-2xl p-4 text-center">
+                  <Clock className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-green-600">
+                    {formatDuration(routeInfo.duration)}
+                  </div>
+                  <div className="text-sm text-gray-600">ETA</div>
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Distance</div>
-            </div>
-
-            <div className="bg-green-50 rounded-2xl p-4 text-center">
-              <Clock className="w-6 h-6 text-green-600 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-green-600">
-                {formatDuration(routeInfo.duration)}
+              <div className="grid grid-cols-2 gap-3 px-4">
+                <Button
+                  onClick={openNavigation}
+                  className="flex items-center justify-center space-x-2 bg-blue-600 text-white py-4 rounded-2xl font-semibold hover:bg-blue-700 transition-colors shadow-lg"
+                >
+                  <img src="/google-maps.png" alt="Google Maps" className="w-6 h-6 mr-2" />
+                  <span>Navigate</span>
+                </Button>
+                <Button
+                  onClick={handleCall}
+                  className="flex items-center justify-center space-x-2 bg-green-600 text-white py-4 rounded-2xl font-semibold hover:bg-green-700 transition-colors shadow-lg"
+                >
+                  <Phone size={20} />
+                  <span>Call Customer</span>
+                </Button>
               </div>
-              <div className="text-sm text-gray-600">ETA</div>
+              <DrawerFooter>
+                <DrawerClose asChild>
+                  <Button variant="outline" className="w-full mt-2">Close</Button>
+                </DrawerClose>
+              </DrawerFooter>
             </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={openNavigation}
-              className="flex items-center justify-center space-x-2 bg-blue-600 text-white py-4 rounded-2xl font-semibold hover:bg-blue-700 transition-colors shadow-lg"
-            >
-              <img src="/google-maps.png" alt="Google Maps" className="w-6 h-6 mr-2" />
-              <span>Navigate</span>
-            </button>
-
-            <button
-              onClick={handleCall}
-              className="flex items-center justify-center space-x-2 bg-green-600 text-white py-4 rounded-2xl font-semibold hover:bg-green-700 transition-colors shadow-lg"
-            >
-              <Phone size={20} />
-              <span>Call Customer</span>
-            </button>
-          </div>
-
-
-        </div>
+          </DrawerContent>
+        </Drawer>
       )}
-
-      {/* Map Style Switcher */}
       <div className="absolute top-2 left-4 z-10">
         <select
           value={mapStyle}
